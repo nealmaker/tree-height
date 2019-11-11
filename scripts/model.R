@@ -31,10 +31,10 @@ test <- nf_fia[index,]
 # Preprocess data
 #####################################################################
 
-preproc_ht <- preProcess(train[,-1], method = c("center", "scale", "YeoJohnson"))
+preproc_ht_full <- preProcess(train[,-1], method = c("center", "scale", "YeoJohnson"))
   
-train_tran <- predict(preproc_ht, train)
-test_tran <- predict(preproc_ht, test)
+train_tran <- predict(preproc_ht_full, train)
+test_tran <- predict(preproc_ht_full, test)
 
 x <- train_tran[,-1]
 y <- train_tran[,1]
@@ -51,11 +51,11 @@ RMSE <- function(true_ratings, predicted_ratings){
 
 
 set.seed(1)
-ht_model <- train(x, y,
+ht_model_full <- train(x, y,
                   method = "ranger",
                   num.trees = 200,
                   importance = 'impurity',
-                  tuneGrid = data.frame(mtry = seq(8, 14, by = 2),
+                  tuneGrid = data.frame(mtry = seq(2, 8, by = 2),
                                         splitrule = rep("variance", 4),
                                         min.node.size = rep(5, 4)))
 
@@ -64,11 +64,11 @@ ht_model <- train(x, y,
 # Results 
 #####################################################################
 
-ht_model$results
+ht_model_full$results
 
-plot(ht_model)
+plot(ht_model_full)
 
-varImp(ht_model, scale = F)
+varImp(ht_model_full, scale = T)
 
 
 #####################################################################
@@ -92,15 +92,75 @@ df <- data.frame(spp = factor(rep("white pine", 4), levels = levels(train$spp)),
                  landscape = factor(rep("rolling uplands", 4),
                                     levels = levels(train$landscape)))
 
-df_trans <- predict(preproc_ht, newdata = df)
+df_trans <- predict(preproc_ht_full, newdata = df)
 
 df_pred <- df %>% 
-  mutate(y_hat = predict(ht_model, newdata = df_trans))
+  mutate(y_hat = predict(ht_model_full, newdata = df_trans))
 
+
+#####################################################################
+# Preprocess operational
+#####################################################################
+
+preproc_ht_op <- preProcess(train[,2:9], method = c("center", "scale", "YeoJohnson"))
+
+train_tran_op <- predict(preproc_ht_op, train[,1:9])
+test_tran_op <- predict(preproc_ht_op, test[,1:9])
+
+x <- train_tran[,2:9]
+y <- train_tran[,1]
+
+
+#####################################################################
+# Train operational model
+#####################################################################
+
+set.seed(1)
+ht_model_op <- train(x, y,
+                       method = "ranger",
+                       num.trees = 200,
+                       importance = 'impurity',
+                       tuneGrid = data.frame(mtry = seq(2, 8, by = 2),
+                                             splitrule = rep("variance", 4),
+                                             min.node.size = rep(5, 4)))
+
+
+#####################################################################
+# Results 
+#####################################################################
+
+ht_model_op$results
+
+plot(ht_model_op)
+
+varImp(ht_model_op, scale = T)
+
+
+#####################################################################
+# Prediction op
+#####################################################################
+
+df <- data.frame(spp = factor(rep("white pine", 4), levels = levels(train$spp)),
+                 dbh_s = rep(12, 4),
+                 cr_s = seq(10, 70, 20),
+                 ba_s = rep(150, 4),
+                 bal_s = seq(225, 0, -75),
+                 forest_type_s = factor(rep("White pine", 4),
+                                        levels = levels(train$forest_type_s)),
+                 lat = rep(44.7, 4),
+                 lon = rep(-73.6, 4))
+
+df_trans <- predict(preproc_ht_op, newdata = df)
+
+df_pred <- df %>% 
+  mutate(y_hat = predict(ht_model_op, newdata = df_trans))
 
 #####################################################################
 # Save
 #####################################################################
 
 # STOP! Too big to fit on GitHub
-# save(ht_model, file = "rda/ht_model.rda")
+# save(ht_model_full, file = "../big-rdas/ht-model-full.rda")
+# save(preproc_ht_full, file = "../big-rdas/preproc-ht-full.rda")
+# save(ht_model_op, file = "../big-rdas/ht-model-op.rda")
+# save(preproc_ht_op, file = "../big-rdas/preproc-ht-op.rda")

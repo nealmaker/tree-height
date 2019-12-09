@@ -4,18 +4,18 @@ library("Rborist")
 
 # load data from GitHub
 temp <- tempfile()
-download.file("https://github.com/nealmaker/fia-data-nf/raw/master/rda/nf-fia-with-ht.rda", 
+download.file("https://github.com/nealmaker/fia-data-nf/raw/master/rda/nf-fia.rda", 
               temp)
 load(temp)
 
 # remove trees that died and unwanted variables
-nf_fia <- nf_fia_with_ht %>%
+nf_fia <- nf_fia %>%
   filter(!is.na(ht_s)) %>% 
-  select(ht_s, spp, dbh_s, cr_s, ba_s, bal_s, 
-         forest_type_s, lat, lon, slope, aspect, 
-         crown_class_s, stocking_s, site_class,
-         landscape)
+  select(ht_s, spp, dbh_s, cr_s, crown_class_s, tree_class_s,
+         ba_s, bal_s, forest_type_s, stocking_s, landscape, 
+         site_class, slope, aspect, lat, lon, elev)
   
+unlink(temp)
 
 # test set is 20% of full dataset
 test_size <- .2
@@ -86,7 +86,7 @@ df_pred <- df %>%
 #####################################################################
 
 set.seed(1)
-ht_model_op <- train(x[,c(1:8, 13)], y,
+ht_model_op <- train(x[,c(1:3, 6:8, 11, 14:15)], y,
                      method = "ranger",
                      preProcess = c("center", "scale", "YeoJohnson"),
                      num.trees = 200,
@@ -111,7 +111,7 @@ varImp(ht_model_op, scale = F)
 # Prediction op
 #####################################################################
 
-df <- data.frame(spp = factor(c(rep("white pine", 4), rep("hemlock", 4), 
+df_op <- data.frame(spp = factor(c(rep("white pine", 4), rep("hemlock", 4), 
                                 rep("soft maple", 4)),
                               levels = levels(train$spp)),
                  dbh_s = rep(12, 12),
@@ -121,10 +121,11 @@ df <- data.frame(spp = factor(c(rep("white pine", 4), rep("hemlock", 4),
                  forest_type_s = factor(rep("Northern hardwood", 12),
                                         levels = levels(train$forest_type_s)),
                  lat = rep(44.7, 12),
-                 lon = rep(-73.6, 12))
+                 lon = rep(-73.6, 12),
+                 site_class = rep(5, 12))
 
-df_pred <- df %>% 
-  mutate(y_hat = predict(ht_model_op, newdata = df))
+df_pred_op <- df %>% 
+  mutate(y_hat = predict(ht_model_op, newdata = df_op))
 
 #####################################################################
 # Save

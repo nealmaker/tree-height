@@ -13,7 +13,10 @@ nf_fia <- nf_fia %>%
   filter(!is.na(ht_s)) %>% 
   select(ht_s, spp, dbh_s, cr_s, crown_class_s, tree_class_s,
          ba_s, bal_s, forest_type_s, stocking_s, landscape, 
-         site_class, slope, aspect, lat, lon, elev, plot)
+         site_class, slope, aspect, lat, lon, elev, plot) %>% 
+  rename(dbh = dbh_s, cr = cr_s, crown_class = crown_class_s,
+         tree_class = tree_class_s, ba = ba_s, bal = bal_s,
+         forest_type = forest_type_s, stocking = stocking_s)
   
 unlink(temp)
 

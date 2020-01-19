@@ -13,21 +13,25 @@ nf_fia <- nf_fia %>%
   filter(!is.na(ht_s)) %>% 
   select(ht_s, spp, dbh_s, cr_s, crown_class_s, tree_class_s,
          ba_s, bal_s, forest_type_s, stocking_s, landscape, 
-         site_class, slope, aspect, lat, lon, elev)
+         site_class, slope, aspect, lat, lon, elev, plot)
   
 unlink(temp)
 
 # test set is 20% of full dataset
 test_size <- .2
 
+# define test set based on plots (to make it truely independent)
 set.seed(10)
-index <- createDataPartition(nf_fia$ht_s, times = 1, p = test_size, list = FALSE)
+test_plots <- sample(unique(nf_fia$plot), 
+                     size = round(test_size*length(unique(nf_fia$plot))), 
+                     replace = FALSE)
 
+index <- which(nf_fia$plot %in% test_plots)
 train <- nf_fia[-index,]
 test <- nf_fia[index,]
 
-x <- train[,-1]
-y <- train[,1]
+x <- select(train, -plot, -ht_s)
+y <- select(train, ht_s)
 
 
 #####################################################################
@@ -63,19 +67,21 @@ varImp(ht_model_full, scale = F)
 df <- data.frame(spp = factor(rep("white pine", 4), levels = levels(train$spp)),
                  dbh_s = rep(12, 4),
                  cr_s = seq(10, 70, 20),
+                 crown_class_s = rep(2, 4),
+                 tree_class_s = rep(2, 4),
                  ba_s = rep(150, 4),
                  bal_s = seq(225, 0, -75),
                  forest_type_s = factor(rep("White pine", 4),
                                         levels = levels(train$forest_type_s)),
-                 lat = rep(44.7, 4),
-                 lon = rep(-73.6, 4),
+                 stocking_s = rep(2, 4),
+                 landscape = factor(rep("rolling uplands", 4),
+                                    levels = levels(train$landscape)),
+                 site_class = rep(5, 4),
                  slope = rep(0, 4),
                  aspect = rep(0, 4),
-                 crown_class_s = rep(2, 4),
-                 stocking_s = rep(2, 4),
-                 site_class = rep(5, 4),
-                 landscape = factor(rep("rolling uplands", 4),
-                                    levels = levels(train$landscape)))
+                 lat = rep(44.7, 4),
+                 lon = rep(-73.6, 4),
+                 elev = rep(1400, 4))
 
 df_pred <- df %>% 
   mutate(y_hat = predict(ht_model_full, newdata = df))

@@ -94,15 +94,23 @@ df_pred <- df %>%
 # Train operational model
 #####################################################################
 
+x2 <- select(x, 
+             -landscape, 
+             -crown_class, 
+             -tree_class, 
+             -aspect, 
+             -slope, 
+             -stocking)
+
 set.seed(1)
-ht_model_op <- train(x[,c(1:3, 6:8, 11, 14:15)], y,
+ht_model_op <- train(x2, y,
                      method = "ranger",
                      preProcess = c("center", "scale", "YeoJohnson"),
                      num.trees = 200,
                      importance = 'impurity',
-                     tuneGrid = data.frame(mtry = seq(2, 8, by = 2),
-                                           splitrule = rep("variance", 4),
-                                           min.node.size = rep(5, 4)))
+                     tuneGrid = data.frame(mtry = seq(2, 10, by = 2),
+                                           splitrule = rep("variance", 5),
+                                           min.node.size = rep(5, 5)))
 
 
 #####################################################################

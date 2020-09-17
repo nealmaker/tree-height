@@ -46,6 +46,7 @@ get_coefs <- function(df) {
                data = df, 
                # increase max iterations to allow for coefficient convergence
                control = nls.lm.control(maxiter = 300))
+
   
   coef(mod)
 }

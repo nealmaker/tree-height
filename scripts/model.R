@@ -13,7 +13,8 @@ nf_fia <- nf_fia %>%
   filter(!is.na(ht_s)) %>% 
   select(ht_s, spp, dbh_s, cr_s, crown_class_s, tree_class_s,
          ba_s, bal_s, forest_type_s, stocking_s, landscape, 
-         site_class, slope, aspect, lat, lon, elev, plot) %>% 
+         site_class, slope, aspect, lat, lon, elev, ba_ash:`bal_yellow birch`, 
+         plot) %>% 
   rename(dbh = dbh_s, cr = cr_s, crown_class = crown_class_s,
          tree_class = tree_class_s, ba = ba_s, bal = bal_s,
          forest_type = forest_type_s, stocking = stocking_s)
@@ -47,9 +48,9 @@ ht_model_full <- train(x, y,
                   preProcess = c("center", "scale", "YeoJohnson"),
                   num.trees = 200,
                   importance = 'impurity',
-                  tuneGrid = data.frame(mtry = seq(2, 8, by = 2),
-                                        splitrule = rep("variance", 4),
-                                        min.node.size = rep(5, 4)))
+                  tuneGrid = data.frame(mtry = seq(2, 14, by = 2),
+                                        splitrule = rep("variance", 7),
+                                        min.node.size = rep(5, 7)))
 
 
 #####################################################################
